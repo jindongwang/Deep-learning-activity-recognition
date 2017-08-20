@@ -43,6 +43,18 @@ Just run the `activity_recognition.py` file, that's all.
 
 `python activity_recognition.py` or click the run button in you IDE.
 
+### About the inputs
+
+That dataset contains 9 channels of the inputs: (acc_body, acc_total and acc_gyro) on x-y-z. So the input channel is 9.
+
+Dataset providers have clipped the dataset using sliding window, so every 128 in `.txt` can be considered as an input. In real life, you need to first clipped the input using sliding window.
+
+So in the end, we reformatted the inputs from 9 inputs files to 1 file, the shape of that file is `[n_sample,128,9]`, that is, every windows has 9 channels with each channel has length 128. When feeding it to Tensorflow, it has to be reshaped to `[n_sample,128,1,9]` as we expect there is 128 X 1 signals for every channel.
+
+### About the result
+
+The result can vary depending the network structure. For comparison, I have provide a result file called `result_all.csv` containing results of different *dropout/learning_rate/training_epoch*.
+
 ## Related projects
 
 - [Must-read papers about deep learning based human activity recognition](https://github.com/jindongwang/activityrecognition/blob/master/notes/deep.md)
