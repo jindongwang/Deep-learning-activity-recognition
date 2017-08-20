@@ -33,11 +33,15 @@ Convolution + pooling + convolution + pooling +   dense + dense + dense + output
 That is: 2 convolutions, 2 poolings, and 3 fully connected layers. Please check the following image.
 
 
-
 ### RNN structure
 
 Coming soon
 
+## Usage
+
+Just run the `activity_recognition.py` file, that's all.
+
+`python activity_recognition.py` or click the run button in you IDE.
 
 ## Related projects
 
