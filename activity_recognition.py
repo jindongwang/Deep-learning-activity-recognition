@@ -6,12 +6,14 @@
 
 import os
 
+# This is for showing the Tensorflow log
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import numpy as np
 import tensorflow as tf
 
 
+# This is for parsing the X data, you can ignore it if you do not need preprocessing
 def format_data_x(datafile):
     x_data = None
     for item in datafile:
@@ -32,12 +34,15 @@ def format_data_x(datafile):
     return X
 
 
+# This is for parsing the Y data, you can ignore it if you do not need preprocessing
 def format_data_y(datafile):
     data = np.loadtxt(datafile, dtype=np.int) - 1
     YY = np.eye(6)[data]
     return YY
 
 
+# Load data function, if there exists parsed data file, then use it
+# If not, parse the original dataset from scratch
 def load_data():
     import os
     if os.path.isfile('data/data_har.npz') == True:
@@ -47,7 +52,9 @@ def load_data():
         X_test = data['X_test']
         Y_test = data['Y_test']
     else:
-        str_folder = 'H:/Data/adl/UCI Smartphone/UCI HAR Dataset/'
+        # This for processing the dataset from scratch
+        # After downloading the dataset, put it to somewhere that str_folder can find
+        str_folder = 'Your root folder' + 'UCI HAR Dataset/'
         INPUT_SIGNAL_TYPES = [
             "body_acc_x_",
             "body_acc_y_",
@@ -74,33 +81,56 @@ def load_data():
     return X_train, Y_train, X_test, Y_test
 
 
+# A class for some hyperparameters
 class Config(object):
     def __init__(self, X_train, Y_train):
-        self.n_input = len(X_train[0])
-        self.n_output = len(Y_train[0])
-        self.dropout = 0.8
-        self.learning_rate = 0.001
-        self.training_epoch = 20
-        self.n_channel = 9
-        self.input_height = 128
-        self.input_width = 1
-        self.kernel_size = 64
-        self.depth = 32
-        self.n_hidden = 1000
-        self.batch_size = 16
-        self.show_progress = 50
+        self.n_input = len(X_train[0])  # number of input neurons to the network
+        self.n_output = len(Y_train[0])  # number of output neurons
+        self.dropout = 0.8  # dropout, between 0 and 1
+        self.learning_rate = 0.001  # learning rate, float
+        self.training_epoch = 20  # training epoch
+        self.n_channel = 9  # number of input channel
+        self.input_height = 128  # input height
+        self.input_width = 1  # input width
+        self.kernel_size = 64  # number of convolution kernel size
+        self.depth = 32  # number of convolutions
+        self.n_hidden = 1000  # number of hidden units
+        self.batch_size = 16  # batch size
+        self.show_progress = 50  # how many batches to show the progress
+
+        # weights and biases definition
+        self.weights = {
+            'wc1': tf.Variable(tf.random_normal([1, config.kernel_size, config.n_channel, config.depth])),
+            'wc2': tf.Variable(tf.random_normal([1, config.kernel_size, config.depth, 64])),
+            'wd1': tf.Variable(tf.random_normal([32 * 32 * 2, config.n_hidden])),
+            'wd2': tf.Variable(tf.random_normal([config.n_hidden, 500])),
+            'wd3': tf.Variable(tf.random_normal([500, 300])),
+            'out': tf.Variable(tf.random_normal([300, config.n_output]))
+        }
+
+        self.biases = {
+            'bc1': tf.Variable(tf.random_normal([config.depth])),
+            'bc2': tf.Variable(tf.random_normal([64])),
+            'bd1': tf.Variable(tf.random_normal([config.n_hidden])),
+            'bd2': tf.Variable(tf.random_normal([500])),
+            'bd3': tf.Variable(tf.random_normal([300])),
+            'out': tf.Variable(tf.random_normal([config.n_output]))
+        }
 
 
+# wrap of conv1d
 def conv1d(x, W, b, stride):
     x = tf.nn.conv2d(x, W, strides=[1, stride, 1, 1], padding='SAME')
     x = tf.add(x, b)
     return tf.nn.relu(x)
 
 
+# wrap of maxpool1d
 def maxpool1d(x, kernel_size, stride):
     return tf.nn.max_pool(x, ksize=[1, kernel_size, 1, 1], strides=[1, stride, 1, 1], padding='VALID')
 
 
+# network definition
 def conv_net(x, W, b, dropout):
     conv1 = conv1d(x, W['wc1'], b['bc1'], 1)
     conv1 = maxpool1d(conv1, 2, stride=2)
@@ -120,29 +150,14 @@ def conv_net(x, W, b, dropout):
     return out
 
 
+# wrap the network for training and testing
 def network(X_train, Y_train, X_test, Y_test):
     config = Config(X_train, Y_train)
     X = tf.placeholder(tf.float32, shape=[None, config.input_height, config.input_width, config.n_channel])
     Y = tf.placeholder(tf.float32, shape=[None, config.n_output])
     keep_prob = tf.placeholder(tf.float32)
-    weights = {
-        'wc1': tf.Variable(tf.random_normal([1, config.kernel_size, config.n_channel, config.depth])),
-        'wc2': tf.Variable(tf.random_normal([1, config.kernel_size, config.depth, 64])),
-        'wd1': tf.Variable(tf.random_normal([32 * 32 * 2, config.n_hidden])),
-        'wd2':tf.Variable(tf.random_normal([config.n_hidden, 500])),
-        'wd3': tf.Variable(tf.random_normal([500, 300])),
-        'out': tf.Variable(tf.random_normal([300, config.n_output]))
-    }
 
-    biases = {
-        'bc1': tf.Variable(tf.random_normal([config.depth])),
-        'bc2': tf.Variable(tf.random_normal([64])),
-        'bd1': tf.Variable(tf.random_normal([config.n_hidden])),
-        'bd2': tf.Variable(tf.random_normal([500])),
-        'bd3': tf.Variable(tf.random_normal([300])),
-        'out': tf.Variable(tf.random_normal([config.n_output]))
-    }
-    y_pred = conv_net(X, weights, biases, config.dropout)
+    y_pred = conv_net(X, config.weights, self.biases, config.dropout)
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=Y, logits=y_pred))
     optimizer = tf.train.AdamOptimizer(learning_rate=config.learning_rate).minimize(cost)
 
