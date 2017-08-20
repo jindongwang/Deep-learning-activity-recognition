@@ -94,27 +94,26 @@ class Config(object):
         self.input_width = 1  # input width
         self.kernel_size = 64  # number of convolution kernel size
         self.depth = 32  # number of convolutions
-        self.n_hidden = 1000  # number of hidden units
         self.batch_size = 16  # batch size
         self.show_progress = 50  # how many batches to show the progress
 
         # weights and biases definition
         self.weights = {
-            'wc1': tf.Variable(tf.random_normal([1, config.kernel_size, config.n_channel, config.depth])),
-            'wc2': tf.Variable(tf.random_normal([1, config.kernel_size, config.depth, 64])),
-            'wd1': tf.Variable(tf.random_normal([32 * 32 * 2, config.n_hidden])),
-            'wd2': tf.Variable(tf.random_normal([config.n_hidden, 500])),
+            'wc1': tf.Variable(tf.random_normal([1, self.kernel_size, self.n_channel, self.depth])),
+            'wc2': tf.Variable(tf.random_normal([1, self.kernel_size, self.depth, 64])),
+            'wd1': tf.Variable(tf.random_normal([32 * 32 * 2, 1000])),
+            'wd2': tf.Variable(tf.random_normal([1000, 500])),
             'wd3': tf.Variable(tf.random_normal([500, 300])),
-            'out': tf.Variable(tf.random_normal([300, config.n_output]))
+            'out': tf.Variable(tf.random_normal([300, self.n_output]))
         }
 
         self.biases = {
-            'bc1': tf.Variable(tf.random_normal([config.depth])),
+            'bc1': tf.Variable(tf.random_normal([self.depth])),
             'bc2': tf.Variable(tf.random_normal([64])),
-            'bd1': tf.Variable(tf.random_normal([config.n_hidden])),
+            'bd1': tf.Variable(tf.random_normal([1000])),
             'bd2': tf.Variable(tf.random_normal([500])),
             'bd3': tf.Variable(tf.random_normal([300])),
-            'out': tf.Variable(tf.random_normal([config.n_output]))
+            'out': tf.Variable(tf.random_normal([self.n_output]))
         }
 
 
@@ -134,15 +133,15 @@ def maxpool1d(x, kernel_size, stride):
 def conv_net(x, W, b, dropout):
     conv1 = conv1d(x, W['wc1'], b['bc1'], 1)
     conv1 = maxpool1d(conv1, 2, stride=2)
-    conv2 = conv1d(conv1,W['wc2'],b['bc2'],1)
-    conv2 = maxpool1d(conv2,2,stride=2)
+    conv2 = conv1d(conv1, W['wc2'], b['bc2'], 1)
+    conv2 = maxpool1d(conv2, 2, stride=2)
     conv2 = tf.reshape(conv2, [-1, W['wd1'].get_shape().as_list()[0]])
     fc1 = tf.add(tf.matmul(conv2, W['wd1']), b['bd1'])
     fc1 = tf.nn.relu(fc1)
     fc1 = tf.nn.dropout(fc1, keep_prob=dropout)
-    fc2 = tf.add(tf.matmul(fc1,W['wd2']),b['bd2'])
+    fc2 = tf.add(tf.matmul(fc1, W['wd2']), b['bd2'])
     fc2 = tf.nn.relu(fc2)
-    fc2 = tf.nn.dropout(fc2,keep_prob=dropout)
+    fc2 = tf.nn.dropout(fc2, keep_prob=dropout)
     fc3 = tf.add(tf.matmul(fc2, W['wd3']), b['bd3'])
     fc3 = tf.nn.relu(fc3)
     fc3 = tf.nn.dropout(fc3, keep_prob=dropout)
@@ -153,11 +152,13 @@ def conv_net(x, W, b, dropout):
 # wrap the network for training and testing
 def network(X_train, Y_train, X_test, Y_test):
     config = Config(X_train, Y_train)
+
+    # X, Y and keep_prob are three feeds to the network
     X = tf.placeholder(tf.float32, shape=[None, config.input_height, config.input_width, config.n_channel])
     Y = tf.placeholder(tf.float32, shape=[None, config.n_output])
     keep_prob = tf.placeholder(tf.float32)
 
-    y_pred = conv_net(X, config.weights, self.biases, config.dropout)
+    y_pred = conv_net(X, config.weights, config.biases, config.dropout)
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=Y, logits=y_pred))
     optimizer = tf.train.AdamOptimizer(learning_rate=config.learning_rate).minimize(cost)
 
@@ -181,7 +182,7 @@ def network(X_train, Y_train, X_test, Y_test):
                                                     Y: y_train_batch,
                                                     keep_prob: config.dropout})
                     print('Epoch:%02d,batch:%03d,loss:%.8f,accuracy:%.8f' % (
-                    i + 1, (j + 1) * config.batch_size, loss, acc))
+                        i + 1, (j + 1) * config.batch_size, loss, acc))
         print('Optimization finished!')
         acc_test = sess.run(accuracy, feed_dict={X: np.reshape(X_test, [len(X_test), 128, 1, 9]),
                                                  Y: np.reshape(Y_test, [len(Y_test), 6]),
@@ -191,6 +192,8 @@ def network(X_train, Y_train, X_test, Y_test):
 
 if __name__ == '__main__':
     X_train, Y_train, X_test, Y_test = load_data()
+    # normalizing the data
     X_train = (X_train - np.mean(X_train)) / np.std(X_train)
     X_test = (X_test - np.mean(X_test)) / np.std(X_test)
+    # build the network
     network(X_train, Y_train, X_test, Y_test)
