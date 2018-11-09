@@ -41,9 +41,9 @@ Coming soon
 
 ## Usage
 
-- For tensorflow, run `activity_recognition.py` file.
+- For tensorflow, run `tensorflow.py` file.
 
-- For Pytorch, run 'pytorch.py' file.
+- For Pytorch, run `pytorch.py` file.
 
 ### About the inputs
 
