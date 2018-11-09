@@ -2,11 +2,13 @@
 
 > Deep learning is perhaps the nearest future of human activity recognition. While there are many existing non-deep method, we still want to unleash the full power of deep learning. This repo provides a demo of using deep learning to perform human activity recognition.
 
+We support both Tensorflow and Pytorch.
+
 ## Prerequisites
 
 - Python 3.x
 - Numpy
-- Tensorflow
+- Tensorflow or Pytorch 0.4.0
 
 ## Dataset
 
@@ -39,9 +41,9 @@ Coming soon
 
 ## Usage
 
-Just run the `activity_recognition.py` file, that's all.
+- For tensorflow, run `activity_recognition.py` file.
 
-`python activity_recognition.py` or click the run button in you IDE.
+- For Pytorch, run 'pytorch.py' file.
 
 ### About the inputs
 
