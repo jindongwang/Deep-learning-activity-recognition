@@ -1,4 +1,4 @@
-#encoding=utf-8
+# encoding=utf-8
 """
     Created on 10:38 2018/11/10 
     @author: Jindong Wang
@@ -7,6 +7,7 @@
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+
 
 # This is for parsing the X data, you can ignore it if you do not need preprocessing
 def format_data_x(datafile):
@@ -80,6 +81,7 @@ def onehot_to_label(y_onehot):
     a = np.argwhere(y_onehot == 1)
     return a[:, -1]
 
+
 class data_loader(Dataset):
     def __init__(self, samples, labels, t):
         self.samples = samples
@@ -88,19 +90,21 @@ class data_loader(Dataset):
 
     def __getitem__(self, index):
         sample, target = self.samples[index], self.labels[index]
-        return sample, target
+        return self.T(sample), target
 
     def __len__(self):
         return len(self.samples)
 
 
-def load(x_train, y_train, x_test, y_test):
+def load(batch_size=64):
+    x_train, y_train, x_test, y_test = load_data()
+    x_train, x_test = x_train.reshape((-1, 9, 1, 128)), x_test.reshape((-1, 9, 1, 128))
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=(0,0,0,0,0,0,0,0,0), std=(0,0,0,0,0,0,0,0,0))
+        transforms.Normalize(mean=(0,0,0,0,0,0,0,0,0), std=(1,1,1,1,1,1,1,1,1))
     ])
     train_set = data_loader(x_train, y_train, transform)
     test_set = data_loader(x_test, y_test, transform)
-    train_loader = DataLoader(train_set, batch_size=64, shuffle=True, drop_last=True)
-    test_loader = DataLoader(test_set, batch_size=64, shuffle=False)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, drop_last=True)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
     return train_loader, test_loader

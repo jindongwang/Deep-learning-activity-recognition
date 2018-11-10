@@ -30,6 +30,7 @@ def train(model, optimizer, train_loader, test_loader):
         total = 0
         for index, (sample, target) in enumerate(train_loader):
             sample, target = sample.to(DEVICE).float(), target.to(DEVICE).long()
+            sample = sample.view(-1, 9, 1, 128)
             output = model(sample)
             loss = criterion(output, target)
             optimizer.zero_grad()
@@ -54,6 +55,7 @@ def train(model, optimizer, train_loader, test_loader):
             correct, total = 0, 0
             for sample, target in test_loader:
                 sample, target = sample.to(DEVICE).float(), target.to(DEVICE).long()
+                sample = sample.view(-1, 9, 1, 128)
                 output = model(sample)
                 _, predicted = torch.max(output.data, 1)
                 total += target.size(0)
@@ -78,9 +80,7 @@ def plot():
 
 if __name__ == '__main__':
     torch.manual_seed(10)
-    x_train, y_train, x_test, y_test = data_preprocess.load_data()
-    train_loader, test_loader = data_preprocess.load(x_train.reshape((-1, 9, 1, 128)), y_train,
-                                                     x_test.reshape((-1, 9, 1, 128)), y_test)
+    train_loader, test_loader = data_preprocess.load(batch_size=BATCH_SIZE)
     model = net.Network().to(DEVICE)
     optimizer = optim.SGD(params=model.parameters(), lr=LEARNING_RATE, momentum=0.9)
     train(model, optimizer, train_loader, test_loader)
