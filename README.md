@@ -24,7 +24,7 @@ Of course, this dataset needs further preprocessing before being put into the ne
 
 ## Usage
 
-- For Pytorch (recommend), go to `pytorch` folder, run `main_pytorch.py`.
+- For Pytorch (recommend), go to `pytorch` folder, and then run `main_pytorch.py`.
 
 - For tensorflow, run `tensorflow.py` file. The update of tensorflow version is stopped since I personally like Pytorch.
 
