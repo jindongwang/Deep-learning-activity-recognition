@@ -12,7 +12,6 @@ class Network(nn.Module):
         super(Network, self).__init__()
         self.conv1 = nn.Sequential(
             nn.Conv2d(in_channels=9, out_channels=32, kernel_size=(1, 9)),
-            # nn.BatchNorm1d()
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(1, 2), stride=2)
         )

@@ -7,6 +7,8 @@
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+from config import config_info
+from sklearn.preprocessing import StandardScaler
 
 
 # This is for parsing the X data, you can ignore it if you do not need preprocessing
@@ -41,8 +43,8 @@ def format_data_y(datafile):
 # If not, parse the original dataset from scratch
 def load_data():
     import os
-    if os.path.isfile('data/data_har.npz') == True:
-        data = np.load('data/data_har.npz')
+    if os.path.isfile(config_info['data_folder'] + 'data_har.npz') == True:
+        data = np.load(config_info['data_folder'] + 'data_har.npz')
         X_train = data['X_train']
         Y_train = data['Y_train']
         X_test = data['X_test']
@@ -50,7 +52,7 @@ def load_data():
     else:
         # This for processing the dataset from scratch
         # After downloading the dataset, put it to somewhere that str_folder can find
-        str_folder = 'Your root folder' + 'UCI HAR Dataset/'
+        str_folder = config_info['data_folder_raw'] + 'UCI HAR Dataset/'
         INPUT_SIGNAL_TYPES = [
             "body_acc_x_",
             "body_acc_y_",
@@ -65,7 +67,8 @@ def load_data():
 
         str_train_files = [str_folder + 'train/' + 'Inertial Signals/' + item + 'train.txt' for item in
                            INPUT_SIGNAL_TYPES]
-        str_test_files = [str_folder + 'test/' + 'Inertial Signals/' + item + 'test.txt' for item in INPUT_SIGNAL_TYPES]
+        str_test_files = [str_folder + 'test/' + 'Inertial Signals/' +
+                          item + 'test.txt' for item in INPUT_SIGNAL_TYPES]
         str_train_y = str_folder + 'train/y_train.txt'
         str_test_y = str_folder + 'test/y_test.txt'
 
@@ -90,21 +93,30 @@ class data_loader(Dataset):
 
     def __getitem__(self, index):
         sample, target = self.samples[index], self.labels[index]
-        return self.T(sample), target
+        if self.T:
+            return self.T(sample), target
+        else:
+            return sample, target
 
     def __len__(self):
         return len(self.samples)
 
 
+def normalize(x):
+    x_min = x.min(axis=(0, 2, 3), keepdims=True)
+    x_max = x.max(axis=(0, 2, 3), keepdims=True)
+    x_norm = (x - x_min) / (x_max - x_min)
+    return x_norm
+
+
 def load(batch_size=64):
     x_train, y_train, x_test, y_test = load_data()
-    x_train, x_test = x_train.reshape((-1, 9, 1, 128)), x_test.reshape((-1, 9, 1, 128))
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=(0,0,0,0,0,0,0,0,0), std=(1,1,1,1,1,1,1,1,1))
-    ])
+    x_train, x_test = x_train.reshape(
+        (-1, 9, 1, 128)), x_test.reshape((-1, 9, 1, 128))
+    transform = None
     train_set = data_loader(x_train, y_train, transform)
     test_set = data_loader(x_test, y_test, transform)
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, drop_last=True)
+    train_loader = DataLoader(
+        train_set, batch_size=batch_size, shuffle=True, drop_last=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
     return train_loader, test_loader

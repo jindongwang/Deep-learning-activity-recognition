@@ -8,7 +8,7 @@
 
 - Python 3.x
 - Numpy
-- Tensorflow or Pytorch 0.4.0
+- Tensorflow or Pytorch 1.0+
 
 ## Dataset
 
@@ -24,7 +24,7 @@ Of course, this dataset needs further preprocessing before being put into the ne
 
 ## Usage
 
-- For Pytorch (recommend), go to `pytorch` folder, and then run `main_pytorch.py`.
+- For Pytorch (recommend), go to `pytorch` folder, config the folder of your data in `config.py', and then run `main_pytorch.py`.
 
 - For tensorflow, run `main_tensorflow.py` file. The update of tensorflow version is stopped since I personally like Pytorch.
 
@@ -34,7 +34,7 @@ What is the most influential deep structure? CNN it is. So we'll use **CNN** in 
 
 ### CNN structure
 
-Convolution + pooling + convolution + pooling +   dense + dense + dense + output
+Convolution + pooling + convolution + pooling + dense + dense + dense + output
 
 That is: 2 convolutions, 2 poolings, and 3 fully connected layers. 
 
