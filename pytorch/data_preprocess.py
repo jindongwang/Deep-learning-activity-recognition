@@ -6,9 +6,6 @@
 
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-from config import config_info
-from sklearn.preprocessing import StandardScaler
 
 
 # This is for parsing the X data, you can ignore it if you do not need preprocessing
@@ -41,10 +38,10 @@ def format_data_y(datafile):
 
 # Load data function, if there exists parsed data file, then use it
 # If not, parse the original dataset from scratch
-def load_data():
+def load_data(data_folder):
     import os
-    if os.path.isfile(config_info['data_folder'] + 'data_har.npz') == True:
-        data = np.load(config_info['data_folder'] + 'data_har.npz')
+    if os.path.isfile(data_folder + 'data_har.npz') == True:
+        data = np.load(data_folder + 'data_har.npz')
         X_train = data['X_train']
         Y_train = data['Y_train']
         X_test = data['X_test']
@@ -52,7 +49,7 @@ def load_data():
     else:
         # This for processing the dataset from scratch
         # After downloading the dataset, put it to somewhere that str_folder can find
-        str_folder = config_info['data_folder_raw'] + 'UCI HAR Dataset/'
+        str_folder = 'data_folder' + 'UCI HAR Dataset/'
         INPUT_SIGNAL_TYPES = [
             "body_acc_x_",
             "body_acc_y_",
@@ -109,8 +106,8 @@ def normalize(x):
     return x_norm
 
 
-def load(batch_size=64):
-    x_train, y_train, x_test, y_test = load_data()
+def load(data_folder, batch_size=64):
+    x_train, y_train, x_test, y_test = load_data(data_folder)
     x_train, x_test = x_train.reshape(
         (-1, 9, 1, 128)), x_test.reshape((-1, 9, 1, 128))
     transform = None
