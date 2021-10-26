@@ -5,6 +5,7 @@
 """
 
 
+from itertools import accumulate
 import data_preprocess
 import matplotlib.pyplot as plt
 import network as net
@@ -54,22 +55,27 @@ def train(model, optimizer, train_loader, test_loader):
         acc_train = float(correct) * 100.0 / len(train_loader.dataset)
 
         # Testing
-        model.eval()
-        with torch.no_grad():
-            correct, total = 0, 0
-            for sample, target in test_loader:
-                sample, target = sample.to(
-                    DEVICE).float(), target.to(DEVICE).long()
-                sample = sample.view(-1, 9, 1, 128)
-                output = model(sample)
-                _, predicted = torch.max(output.data, 1)
-                total += target.size(0)
-                correct += (predicted == target).sum()
-        acc_test = float(correct) * 100 / total
+        acc_test = valid(model, test_loader)
         print(f'Epoch: [{e}/{args.nepoch}], loss:{total_loss / len(train_loader):.4f}, train_acc: {acc_train:.2f}, test_acc: {float(correct) * 100 / total:.2f}')
         result.append([acc_train, acc_test])
         result_np = np.array(result, dtype=float)
         np.savetxt('result.csv', result_np, fmt='%.2f', delimiter=',')
+
+
+def valid(model, test_loader):
+    model.eval()
+    with torch.no_grad():
+        correct, total = 0, 0
+        for sample, target in test_loader:
+            sample, target = sample.to(
+                DEVICE).float(), target.to(DEVICE).long()
+            sample = sample.view(-1, 9, 1, 128)
+            output = model(sample)
+            _, predicted = torch.max(output.data, 1)
+            total += target.size(0)
+            correct += (predicted == target).sum()
+    acc_test = float(correct) * 100 / total
+    return acc_test
 
 
 def plot():
@@ -82,7 +88,7 @@ def plot():
     plt.legend()
     plt.xlabel('Epoch', fontsize=14)
     plt.ylabel('Accuracy (%)', fontsize=14)
-    plt.title('Training and Test Accuracy', fontsize=20)
+    plt.title('Train and Test Accuracy', fontsize=16)
     plt.savefig('plot.png')
 
 
